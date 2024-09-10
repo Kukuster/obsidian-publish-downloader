@@ -11,11 +11,13 @@ import sys
 import re
 import json
 
+from utils import safely_do_request
+
 if len(sys.argv) < 3:
     print(f"Usage: {sys.argv[0]} URL FOLDER")
     exit(1)
 
-main_page = requests.get(sys.argv[1]).text
+main_page = safely_do_request(lambda : requests.get(sys.argv[1]).text)
 
 match_siteinfo = re.findall('window\.siteInfo\s*=\s*({[^}]+})', main_page)
 
@@ -28,10 +30,10 @@ siteinfo = json.loads(match_siteinfo[0])
 uid = siteinfo["uid"]
 host = siteinfo["host"]
 
-cache_data = requests.get(f"https://{host}/cache/{uid}").json()
+cache_data = safely_do_request(lambda : requests.get(f"https://{host}/cache/{uid}").json())
 
 for i in tqdm(cache_data.keys()):
-    resp = requests.get(f"https://{host}/access/{uid}/{i}")
+    resp = safely_do_request(lambda : requests.get(f"https://{host}/access/{uid}/{i}"))
 
     path = os.path.join(sys.argv[2], i)
     parent_folder = os.path.dirname(os.path.abspath(path))
